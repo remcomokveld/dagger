@@ -150,6 +150,12 @@ maven_jar(
 )
 
 maven_jar(
+    name = "com_squareup_kotlinpoet",
+    artifact = "com.squareup:kotlinpoet:0.7.0",
+    sha1 = "6620fe05172f2f8b8e3f81bd4d6edc7dfcb756f0",
+)
+
+maven_jar(
     name = "io_grpc_grpc_core",
     artifact = "io.grpc:grpc-core:1.2.0",
     sha1 = "f12a213e2b59a0615df2cc9bed35dc15fd2fee37",

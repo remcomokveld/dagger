@@ -173,6 +173,11 @@ java_library(
 )
 
 java_library(
+    name = "kotlinpoet",
+    exports = ["@com_squareup_kotlinpoet//jar"],
+)
+
+java_library(
     name = "mockito",
     testonly = 1,
     exports = ["@org_mockito_mockito_core//jar"],

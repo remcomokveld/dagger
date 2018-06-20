@@ -40,6 +40,7 @@ CODEGEN_SHARED_DEPS = [
     "//third_party:error_prone_annotations",
     "//third_party:google_java_format",
     "//third_party:javapoet",
+    "//third_party:kotlinpoet",
     "@local_jdk//:lib/tools.jar",
     "//third_party:jsr250_annotations",
     "//third_party:jsr330_inject",
