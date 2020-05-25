@@ -36,4 +36,6 @@ public @interface AggregatedDeps {
   String[] entryPoints() default {};
 
   String[] componentEntryPoints() default {};
+
+  String[] aliases() default {};
 }

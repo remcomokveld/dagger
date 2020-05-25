@@ -32,6 +32,7 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "UninstallModules");
 
   public static final ClassName DEFINE_COMPONENT = get("dagger.hilt", "DefineComponent");
+  public static final ClassName COMPONENT_ALIAS = get("dagger.hilt.android.components", "ComponentAlias");
   public static final ClassName DEFINE_COMPONENT_BUILDER =
       get("dagger.hilt", "DefineComponent", "Builder");
   public static final ClassName DEFINE_COMPONENT_NO_PARENT =

@@ -71,7 +71,8 @@ abstract class DefineComponentMetadata {
         element);
 
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.DEFINE_COMPONENT),
+        Processors.hasAnnotation(element, ClassNames.DEFINE_COMPONENT) ||
+                Processors.hasAnnotation(element, ClassNames.COMPONENT_ALIAS),
         element,
         "%s, expected to be annotated with @DefineComponent. Found: %s",
         element,
@@ -151,7 +152,8 @@ abstract class DefineComponentMetadata {
 
     ProcessorErrors.checkState(
         parentComponent.isPresent()
-            || ClassName.get(component).equals(ClassNames.APPLICATION_COMPONENT),
+            || ClassName.get(component).equals(ClassNames.APPLICATION_COMPONENT)
+            || Processors.hasAnnotation(component, ClassNames.COMPONENT_ALIAS),
         component,
         "@DefineComponent %s is missing a parent declaration.\n"
             + "Please declare the parent, for example: @DefineComponent(parent ="

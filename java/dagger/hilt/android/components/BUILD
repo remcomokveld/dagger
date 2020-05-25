@@ -23,6 +23,7 @@ android_library(
         "ActivityComponent.java",
         "ActivityRetainedComponent.java",
         "ApplicationComponent.java",
+        "ComponentAlias.java",
         "FragmentComponent.java",
         "ServiceComponent.java",
         "ViewComponent.java",

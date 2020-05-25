@@ -44,9 +44,11 @@ public abstract class ComponentDescriptor {
   /** Returns the {@link ClassName} for the parent, if it exists. */
   public abstract Optional<ComponentDescriptor> parent();
 
+  public abstract Boolean isAlias();
+
   /** Returns {@code true} if the descriptor represents a root component. */
   public boolean isRoot() {
-    return !parent().isPresent();
+    return !parent().isPresent() && !isAlias();
   }
 
   /**
@@ -88,6 +90,8 @@ public abstract class ComponentDescriptor {
     Builder creator(ClassName creator);
 
     Builder parent(ComponentDescriptor parent);
+
+    Builder isAlias(Boolean isAlias);
 
     ComponentDescriptor build();
   }

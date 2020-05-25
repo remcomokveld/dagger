@@ -81,4 +81,6 @@ public @interface HiltAndroidApp {
   // plugin. Maybe that is a good thing...but might be better to have users be explicit about the
   // base class they want.
   Class<?> value() default Void.class;
+
+  Class<?> componentAlias() default Void.class;
 }

@@ -69,4 +69,6 @@ public @interface AndroidEntryPoint {
    * is not necessary and will be inferred from the current superclass.
    */
   Class<?> value() default Void.class;
+
+  Class<?> componentAlias() default Void.class;
 }

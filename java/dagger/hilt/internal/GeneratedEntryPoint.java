@@ -23,4 +23,6 @@ import java.lang.annotation.Target;
 /** Do not use. Only for use from Hilt generators. */
 @Target(ElementType.TYPE)
 @GeneratesRootInput
-public @interface GeneratedEntryPoint {}
+public @interface GeneratedEntryPoint {
+  Class<?> componentAlias() default Void.class;
+}

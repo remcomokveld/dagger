@@ -75,6 +75,9 @@ public abstract class AndroidEntryPointMetadata {
   /** Returns the initialization arguments for the component manager. */
   public abstract Optional<CodeBlock> componentManagerInitArgs();
 
+  /** The annotation  */
+  public abstract Optional<TypeElement> componentAlias();
+
   /** Returns true if this class allows optional injection. */
   public boolean allowsOptionalInjection() {
     return Processors.hasAnnotation(element(), AndroidClassNames.OPTIONAL_INJECT);
@@ -173,7 +176,8 @@ public abstract class AndroidEntryPointMetadata {
       Optional<AndroidEntryPointMetadata> baseMetadata,
       ImmutableSet<ClassName> installInComponents,
       TypeName componentManager,
-      Optional<CodeBlock> componentManagerInitArgs) {
+      Optional<CodeBlock> componentManagerInitArgs,
+      Optional<TypeElement> componentAlias) {
     return new AutoValue_AndroidEntryPointMetadata(
         element,
         baseElement,
@@ -182,7 +186,8 @@ public abstract class AndroidEntryPointMetadata {
         baseMetadata,
         installInComponents,
         componentManager,
-        componentManagerInitArgs);
+        componentManagerInitArgs,
+        componentAlias);
   }
 
   /**
@@ -215,6 +220,12 @@ public abstract class AndroidEntryPointMetadata {
             env.getElementUtils(),
             Processors.getAnnotationMirror(androidEntryPointElement, annotationClassName),
             "value");
+    final Optional<TypeElement> componentAlias = Optional.of(
+        Processors.getAnnotationClassValue(
+            env.getElementUtils(),
+            Processors.getAnnotationMirror(androidEntryPointElement, annotationClassName),
+            "componentAlias")
+    );
     final TypeElement baseElement;
     final ClassName generatedClassName;
     if (DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)
@@ -255,7 +266,8 @@ public abstract class AndroidEntryPointMetadata {
           baseMetadata,
           baseMetadata.get().installInComponents(),
           baseMetadata.get().componentManager(),
-          baseMetadata.get().componentManagerInitArgs());
+          baseMetadata.get().componentManagerInitArgs(),
+          componentAlias);
     } else {
       Type type = Type.of(androidEntryPointElement, baseElement);
       return manuallyConstruct(
@@ -266,7 +278,8 @@ public abstract class AndroidEntryPointMetadata {
           Optional.empty(),
           ImmutableSet.of(type.component),
           type.manager,
-          Optional.ofNullable(type.componentManagerInitArgs));
+          Optional.ofNullable(type.componentManagerInitArgs),
+          componentAlias);
     }
   }
 

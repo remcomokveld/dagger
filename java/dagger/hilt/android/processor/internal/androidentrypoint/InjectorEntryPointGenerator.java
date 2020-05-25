@@ -16,10 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.*;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
@@ -48,7 +45,7 @@ public final class InjectorEntryPointGenerator {
         TypeSpec.interfaceBuilder(name.simpleName())
             .addOriginatingElement(metadata.element())
             .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.element()))
-            .addAnnotation(ClassNames.GENERATED_ENTRY_POINT)
+            .addAnnotation(AnnotationSpec.builder(ClassNames.GENERATED_ENTRY_POINT).addMember("componentAlias", "$L.class", metadata.componentAlias().get()).build())
             .addAnnotation(metadata.injectorInstallInAnnotation())
             .addModifiers(Modifier.PUBLIC)
             .addMethod(

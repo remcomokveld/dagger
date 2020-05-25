@@ -31,6 +31,7 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +58,8 @@ public final class DefineComponents {
     ComponentDescriptor.Builder builder =
         ComponentDescriptor.builder()
             .component(ClassName.get(metadata.component()))
-            .scopes(metadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()));
+            .scopes(metadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()))
+            .isAlias(Processors.hasAnnotation(metadata.component(), ClassNames.COMPONENT_ALIAS));
 
     metadata.parentMetadata()
         .map(DefineComponentMetadata::component)
@@ -121,7 +123,8 @@ public final class DefineComponents {
         ComponentDescriptor.builder()
             .component(ClassName.get(componentMetadata.component()))
             .scopes(
-                componentMetadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()));
+                componentMetadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()))
+            .isAlias(Processors.hasAnnotation(componentMetadata.component(), ClassNames.COMPONENT_ALIAS));
 
     if (builderMap.containsKey(componentMetadata)) {
       builder.creator(ClassName.get(builderMap.get(componentMetadata).builder()));

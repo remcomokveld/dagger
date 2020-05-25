@@ -61,7 +61,7 @@ public final class ComponentTree {
 
     ImmutableList<ClassName> roots =
         graph.nodes().stream()
-            .filter(node -> graph.inDegree(node) == 0)
+            .filter(node -> graph.inDegree(node) == 0 && !node.isAlias())
             .map(node -> node.component())
             .collect(toImmutableList());
 

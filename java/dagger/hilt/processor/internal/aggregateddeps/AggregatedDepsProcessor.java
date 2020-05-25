@@ -76,6 +76,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         .add(ClassNames.MODULE)
         .addAll(INSTALL_IN_ANNOTATIONS)
         .addAll(ENTRY_POINT_ANNOTATIONS)
+//        .add(ClassNames.COMPONENT_ALIAS)
         .build()
         .stream()
         .map(Object::toString)
@@ -159,7 +160,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           // Generate a public wrapper module which will be processed in the next round.
           new PkgPrivateModuleGenerator(getProcessingEnv(), pkgPrivateMetadata.get()).generate();
         } else {
-          new AggregatedDepsGenerator("modules", module, components, getProcessingEnv()).generate();
+          new AggregatedDepsGenerator("modules", module, components, ImmutableSet.of(), getProcessingEnv()).generate();
         }
       }
     }
@@ -182,12 +183,23 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           element);
       TypeElement entryPoint = asType(element);
 
+      ImmutableSet<ClassName> aliases;
+      if (Processors.hasAnnotation(element, ClassNames.GENERATED_ENTRY_POINT)) {
+        TypeElement typeElement = Processors.getAnnotationClassValue(
+            getProcessingEnv().getElementUtils(),
+            Processors.getAnnotationMirror(element, ClassNames.GENERATED_ENTRY_POINT),
+            "componentAlias");
+        aliases = ImmutableSet.of(ClassName.get(typeElement));
+      } else {
+        aliases = ImmutableSet.of();
+      }
+
       // Get @InstallIn components here to catch errors before skipping user's pkg-private element.
       ImmutableSet<ClassName> components = installInComponents(entryPoint);
       if (isValidKind(element)) {
         if (entryPointAnnotation.equals(ClassNames.COMPONENT_ENTRY_POINT)) {
           new AggregatedDepsGenerator(
-                  "componentEntryPoints", entryPoint, components, getProcessingEnv())
+                  "componentEntryPoints", entryPoint, components, aliases, getProcessingEnv())
               .generate();
         } else {
           Optional<PkgPrivateMetadata> pkgPrivateMetadata =
@@ -196,7 +208,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
             new PkgPrivateEntryPointGenerator(getProcessingEnv(), pkgPrivateMetadata.get())
                 .generate();
           } else {
-            new AggregatedDepsGenerator("entryPoints", entryPoint, components, getProcessingEnv())
+            new AggregatedDepsGenerator("entryPoints", entryPoint, components, aliases, getProcessingEnv())
                 .generate();
           }
         }

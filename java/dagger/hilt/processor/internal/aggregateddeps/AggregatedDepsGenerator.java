@@ -42,16 +42,19 @@ final class AggregatedDepsGenerator {
   private final String dependencyType;
   private final TypeElement dependency;
   private final ImmutableSet<ClassName> components;
+  private final ImmutableSet<ClassName> aliases;
   private final ProcessingEnvironment processingEnv;
 
   AggregatedDepsGenerator(
       String dependencyType,
       TypeElement dependency,
       ImmutableSet<ClassName> components,
+      ImmutableSet<ClassName> aliases,
       ProcessingEnvironment processingEnv) {
     this.dependencyType = dependencyType;
     this.dependency = dependency;
     this.components = components;
+    this.aliases = aliases;
     this.processingEnv = processingEnv;
   }
 
@@ -78,6 +81,7 @@ final class AggregatedDepsGenerator {
     getEnclosingTestName(dependency)
         .ifPresent(test -> annotationBuilder.addMember("test", "$S", test));
     annotationBuilder.addMember(dependencyType, "$S", dependency.getQualifiedName());
+    aliases.forEach(alias -> annotationBuilder.addMember("aliases", "$S", alias));
     return annotationBuilder.build();
   }
 

@@ -16,51 +16,48 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
-import static com.google.common.base.Preconditions.checkState;
-import static dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.AGGREGATING_PACKAGE;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
+import com.google.common.collect.*;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.BadInputException;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ComponentDescriptor;
-import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import dagger.hilt.processor.internal.*;
+
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkState;
+import static dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.AGGREGATING_PACKAGE;
+import static dagger.internal.codegen.extension.DaggerStreams.*;
 
 /**
  * Represents information needed to create a component (i.e. modules, entry points, etc)
  */
 public final class ComponentDependencies {
 
-  /** A key used for grouping a test dependency by both its component and test name. */
+  /**
+   * A key used for grouping a test dependency by both its component and test name.
+   */
   @AutoValue
   abstract static class TestDepKey {
     static TestDepKey of(ClassName component, ClassName test) {
       return new AutoValue_ComponentDependencies_TestDepKey(component, test);
     }
 
-    /** Returns the name of the component this dependency should be installed in. */
+    /**
+     * Returns the name of the component this dependency should be installed in.
+     */
     abstract ClassName component();
 
-    /** Returns the name of the test that this dependency should be installed in. */
+    /**
+     * Returns the name of the test that this dependency should be installed in.
+     */
     abstract ClassName test();
   }
 
@@ -79,6 +76,8 @@ public final class ComponentDependencies {
           ImmutableSetMultimap.builder();
       private final ImmutableSetMultimap.Builder<ClassName, TypeElement> ignoreDeps =
           ImmutableSetMultimap.builder();
+      private final ImmutableSetMultimap.Builder<ClassName, ClassName> aliases =
+          ImmutableSetMultimap.builder();
 
       Builder addDep(ClassName component, Optional<ClassName> test, TypeElement dep) {
         if (test.isPresent()) {
@@ -88,14 +87,20 @@ public final class ComponentDependencies {
         }
         return this;
       }
+      Builder addAlias(ClassName component, ClassName alias) {
+        aliases.put(component, alias);
+        return this;
+      }
 
       Builder ignoreDeps(ClassName test, ImmutableSet<TypeElement> deps) {
         ignoreDeps.putAll(test, deps);
         return this;
       }
 
+      static int counter = 0;
+
       Dependencies build() {
-        return new Dependencies(globalDeps.build(), testDeps.build(), ignoreDeps.build());
+        return new Dependencies(globalDeps.build(), testDeps.build(), ignoreDeps.build(), aliases.build());
       }
     }
 
@@ -108,23 +113,36 @@ public final class ComponentDependencies {
     // Stores ignored deps keyed by test.
     private final ImmutableSetMultimap<ClassName, TypeElement> ignoreDeps;
 
+    private final ImmutableSetMultimap<ClassName, ClassName> aliases;
+
     Dependencies(
         ImmutableSetMultimap<ClassName, TypeElement> globalDeps,
         ImmutableSetMultimap<TestDepKey, TypeElement> testDeps,
-        ImmutableSetMultimap<ClassName, TypeElement> ignoreDeps) {
+        ImmutableSetMultimap<ClassName, TypeElement> ignoreDeps,
+        ImmutableSetMultimap<ClassName, ClassName> aliases) {
       this.globalDeps = globalDeps;
       this.testDeps = testDeps;
       this.ignoreDeps = ignoreDeps;
+      this.aliases = aliases;
     }
 
-    /** Returns the dependencies to be installed in the given component for the given test. */
+    /**
+     * Returns the dependencies to be installed in the given component for the given test.
+     */
     ImmutableSet<TypeElement> get(ClassName component, ClassName test) {
       ImmutableSet<TypeElement> ignoreTestDeps = ignoreDeps.get(test);
+      ImmutableList<ClassName> aliases = this.aliases.get(component).asList();
       return ImmutableSet.<TypeElement>builder()
           .addAll(
               globalDeps.get(component).stream()
                   .filter(dep -> !ignoreTestDeps.contains(dep))
                   .collect(toImmutableSet()))
+          .addAll(
+              aliases.stream()
+                  .filter(alias -> alias != component)
+                  .flatMap(alias -> get(alias, test).stream())
+                  .collect(toImmutableSet())
+          )
           .addAll(testDeps.get(TestDepKey.of(component, test)))
           .build();
     }
@@ -211,6 +229,10 @@ public final class ComponentDependencies {
         for (String dep : deps.componentEntryPoints()) {
           componentEntryPointDeps.addDep(desc.component(), test, elements.getTypeElement(dep));
         }
+        for (String alias : deps.aliases()) {
+//          entryPointDeps.addAlias(desc.component(), ClassName.get(elements.getTypeElement(alias)));
+          moduleDeps.addAlias(desc.component(), ClassName.get(elements.getTypeElement(alias)));
+        }
       }
     }
 
@@ -275,7 +297,9 @@ public final class ComponentDependencies {
     return builder.build();
   }
 
-  /** Returns the top-level elements of the aggregated deps package. */
+  /**
+   * Returns the top-level elements of the aggregated deps package.
+   */
   private static ImmutableList<AggregatedDeps> getAggregatedDeps(Elements elements) {
     PackageElement packageElement = elements.getPackageElement(AGGREGATING_PACKAGE);
     checkState(
